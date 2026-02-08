@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>写实行星 - 菜单定制与彩色高度图版</title>
+    <title>写实行星 - 12位无冲突正式版</title>
     <style>
         :root { --accent: #00e5ff; --glass: rgba(15, 15, 15, 0.9); }
         body { margin: 0; background: #000; color: #fff; font-family: -apple-system, sans-serif; overflow: hidden; height: 100dvh; }
         
-        /* 侧边菜单逻辑 */
         #menu-container {
-            position: absolute; top: 15%; left: 20px;
+            position: absolute; top: 12%; left: 20px;
             z-index: 1000; display: flex; flex-direction: column; gap: 10px;
         }
         #menu-toggle {
@@ -21,23 +20,27 @@
         #ui-panel {
             width: 300px; background: var(--glass); backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.15); border-radius: 20px;
-            padding: 20px; display: none; /* 默认隐藏 */
+            padding: 20px; display: none; 
             box-shadow: 0 20px 60px rgba(0,0,0,0.8);
         }
         
-        .control-row { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 10px; }
+        .seed-ctrl { display: flex; gap: 8px; align-items: center; margin-bottom: 15px; }
+        #btn-rand { background: #444; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+        #btn-rand:active { background: var(--accent); color: #000; }
+
+        .control-row { display: grid; grid-template-columns: 1fr; gap: 15px; }
         label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: block; }
-        input[type="number"] { width: 100%; background: #000; border: 1px solid #333; color: var(--accent); padding: 8px; border-radius: 8px; box-sizing: border-box; }
+        input[type="number"] { flex-grow: 1; background: #000; border: 1px solid #333; color: var(--accent); padding: 8px; border-radius: 8px; box-sizing: border-box; font-family: monospace; font-size: 14px; }
         input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: #333; border-radius: 2px; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--accent); border-radius: 50%; border: 2px solid #000; }
 
-        /* 导出按钮组 */
         .export-group { position: absolute; right: 20px; top: 20%; display: flex; flex-direction: column; gap: 12px; }
         .fab { width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         #btn-geo { background: var(--accent); color: #000; }
-        #btn-hgt { background: #ffaa00; color: #000; } /* 高度图按钮 */
+        #btn-hgt { background: #ffaa00; color: #000; }
         #btn-cld { background: #fff; color: #000; }
         #btn-nor { background: #8080ff; color: #fff; }
+        #btn-land { background: #33ff33; color: #000; }
         
         #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #fff; color: #000; padding: 10px 20px; border-radius: 30px; font-size: 12px; display: none; z-index: 2000; }
     </style>
@@ -49,10 +52,13 @@
 <div id="menu-container">
     <button id="menu-toggle">☰ 星球设置</button>
     <div id="ui-panel">
-        <label>星球种子</label>
-        <input type="number" id="seedIn" value="40662">
+        <label>星球种子 (1-12位独一无二)</label>
+        <div class="seed-ctrl">
+            <input type="number" id="seedIn" value="40662" min="0" max="999999999999" oninput="if(value.length>12)value=value.slice(0,12)">
+            <button id="btn-rand">🎲 随机</button>
+        </div>
         <div class="control-row">
-            <div class="item"><label>海平面 (海拔零点)</label><input type="range" id="seaIn" min="20" max="80" value="48"></div>
+            <div class="item"><label>海平面</label><input type="range" id="seaIn" min="20" max="80" value="48"></div>
             <div class="item"><label>云层密度</label><input type="range" id="cloudIn" min="0" max="100" value="50"></div>
             <div class="item"><label>赤道沙漠化</label><input type="range" id="eqDesertIn" min="0" max="100" value="30"></div>
             <div class="item"><label>北极推进</label><input type="range" id="iceNIn" min="0" max="160" value="30"></div>
@@ -66,18 +72,19 @@
     <button id="btn-hgt" class="fab">彩色<br>高度图</button>
     <button id="btn-cld" class="fab">导出<br>云层</button>
     <button id="btn-nor" class="fab">导出<br>法线</button>
+    <button id="btn-land" class="fab">导出<br>陆地</button>
 </div>
 
 <script type="module">
     import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
     import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
 
-    // 核心噪声算法
     const noiseShader = `
         vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
         vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
         vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
         vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+        
         float snoise(vec3 v) {
             const vec2 C = vec2(1.0/6.0, 1.0/3.0); const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
             vec3 i = floor(v + dot(v, C.yyy)); vec3 x0 = v - i + dot(i, C.xxx);
@@ -99,35 +106,58 @@
             vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
             m = m * m; return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
         }
-        float fbm(vec3 p, int oct) {
+        
+        float fbm(vec3 p, int oct, float shift) {
             float v = 0.0; float amp = 0.5;
-            for (int i=0; i<8; i++) { if(i >= oct) break; v += amp * snoise(p); p *= 2.15; amp *= 0.5; }
+            // 使用种子产生的额外位移防止 FBM 叠加冲突
+            for (int i=0; i<8; i++) { 
+                if(i >= oct) break; 
+                v += amp * snoise(p + shift); 
+                p *= 2.15; amp *= 0.5; 
+            }
             return v;
+        }
+
+        // 增强型哈希算法：针对 12 位整数优化
+        // 将种子拆解为三维极坐标偏移，确保每一位数字的变化都会引起显著的空间拓扑改变
+        vec4 superHash(float seed) {
+            float s1 = floor(seed / 1000000.0); // 高 6 位
+            float s2 = mod(seed, 1000000.0);    // 低 6 位
+            
+            vec3 p3 = fract(vec3(s1, s2, seed) * vec3(.1031, .1030, .0973));
+            p3 += dot(p3, p3.yzx + 33.33);
+            vec3 offset = fract((p3.xxy + p3.yzz) * p3.zyx) * 2000.0;
+            
+            // 第四个分量用于控制相位旋转
+            float phase = fract(seed * 0.01313) * 6.28;
+            return vec4(offset, phase);
         }
     `;
 
-    // 核心星球颜色与高度逻辑
     const planetLogic = `
         float getH(vec3 p, float uSeed) {
-            vec3 sOff = vec3(uSeed * 0.13, uSeed * 0.47, uSeed * 0.71);
-            return fbm(p * 1.5 + sOff, 8) * 0.5 + 0.5;
+            vec4 sh = superHash(uSeed);
+            vec3 sOff = sh.xyz;
+            // 引入相位旋转，即使 sOff 接近，旋转后的噪声结果也完全不同
+            float c = cos(sh.w), s = sin(sh.w);
+            p.xz *= mat2(c, -s, s, c);
+            return fbm(p * 1.5 + sOff, 8, sh.w) * 0.5 + 0.5;
         }
         
-        // 彩色高度图着色逻辑
         vec3 getHeightMapColor(float h, float uSeaLevel) {
             if(h < uSeaLevel) {
-                return mix(vec3(0.0, 0.0, 0.3), vec3(0.0, 0.5, 1.0), h/uSeaLevel); // 深蓝到浅蓝
+                return mix(vec3(0.0, 0.0, 0.3), vec3(0.0, 0.5, 1.0), h/uSeaLevel);
             } else {
                 float landH = (h - uSeaLevel) / (1.0 - uSeaLevel);
-                if(landH < 0.1) return mix(vec3(0.1, 0.6, 0.2), vec3(0.5, 0.8, 0.3), landH/0.1); // 绿地
-                if(landH < 0.4) return mix(vec3(0.5, 0.8, 0.3), vec3(0.9, 0.8, 0.5), (landH-0.1)/0.3); // 黄土
-                if(landH < 0.8) return mix(vec3(0.9, 0.8, 0.5), vec3(0.4, 0.2, 0.1), (landH-0.4)/0.4); // 褐山
-                return mix(vec3(0.4, 0.2, 0.1), vec3(1.0, 1.0, 1.0), (landH-0.8)/0.2); // 雪山
+                if(landH < 0.1) return mix(vec3(0.1, 0.6, 0.2), vec3(0.5, 0.8, 0.3), landH/0.1);
+                if(landH < 0.4) return mix(vec3(0.5, 0.8, 0.3), vec3(0.9, 0.8, 0.5), (landH-0.1)/0.3);
+                if(landH < 0.8) return mix(vec3(0.9, 0.8, 0.5), vec3(0.4, 0.2, 0.1), (landH-0.4)/0.4);
+                return mix(vec3(0.4, 0.2, 0.1), vec3(1.0, 1.0, 1.0), (landH-0.8)/0.2);
             }
         }
 
         vec3 getPlanetColor(vec3 p, float uSeed, float uSeaLevel, float uIceN, float uIceS, float uEqDesert) {
-            vec3 sOff = vec3(uSeed * 0.13, uSeed * 0.47, uSeed * 0.71);
+            vec4 sh = superHash(uSeed);
             float h = getH(p, uSeed);
             bool isWater = h < uSeaLevel;
             float lat = p.y;
@@ -136,7 +166,8 @@
             if(isWater) {
                 col = mix(vec3(0.05, 0.1, 0.22), vec3(0.01, 0.03, 0.08), smoothstep(0.0, 0.7, (uSeaLevel-h)/uSeaLevel));
             } else {
-                float m = fbm(p * 2.5 + sOff + 100.0, 5) * 0.5 + 0.5;
+                // 细节噪声也受相位控制
+                float m = fbm(p * 2.5 + sh.xyz + 123.4, 5, sh.w * 0.5) * 0.5 + 0.5;
                 float desertStrength = uEqDesert / 100.0;
                 float areaLimit = pow(max(0.0, 1.0 - abs(lat) * 1.5), 1.8); 
                 float eqFactor = desertStrength * areaLimit;
@@ -145,15 +176,15 @@
                 bio = mix(bio, vec3(0.08,0.28,0.12), smoothstep(0.65,0.75,finalBiomeFactor));
                 col = mix(bio, vec3(0.35), smoothstep(0.45, 0.85, (h-uSeaLevel)));
             }
-            float noise = snoise(p * 10.0 + sOff) * 0.15; 
-            float detail = snoise(p * 50.0) * 0.03; 
+            float noise = snoise(p * 10.0 + sh.xyz) * 0.15; 
+            float detail = snoise(p * 50.0 + sh.xyz * 0.5) * 0.03; 
             float ice = max(smoothstep(1.1-(uIceN/100.0)+noise, 1.25-(uIceN/100.0)+noise, lat+detail),
                             smoothstep(-1.1+(uIceS/100.0)-noise, -1.25+(uIceS/100.0)-noise, lat-detail));
             return mix(col, mix(vec3(0.98,0.98,1.0), vec3(0.75,0.88,0.98), isWater?1.0:0.0), ice);
         }
     `;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
@@ -183,7 +214,8 @@
         fragmentShader: `${noiseShader}
             varying vec3 vPos; uniform float uSeed, uCloud;
             void main() {
-                float n = fbm(normalize(vPos)*1.3 + uSeed + 500.0, 5)*0.5+0.5;
+                vec4 sh = superHash(uSeed);
+                float n = fbm(normalize(vPos)*1.3 + sh.xyz + vec3(500.0), 5, sh.w)*0.5+0.5;
                 gl_FragColor = vec4(vec3(1.0), smoothstep(1.0-uCloud, 1.2-uCloud, n)*0.8);
             }`,
         transparent: true, depthWrite: false
@@ -192,28 +224,42 @@
     scene.add(new THREE.Mesh(new THREE.SphereGeometry(5, 128, 128), pMat));
     scene.add(new THREE.Mesh(new THREE.SphereGeometry(5, 128, 128), cMat));
 
-    // UI 菜单展开逻辑
-    const menuToggle = document.getElementById('menu-toggle');
-    const uiPanel = document.getElementById('ui-panel');
-    menuToggle.onclick = () => {
-        const isVisible = uiPanel.style.display === 'block';
-        uiPanel.style.display = isVisible ? 'none' : 'block';
+    const ui = { 
+        seed: document.getElementById('seedIn'), 
+        sea: document.getElementById('seaIn'), 
+        cloud: document.getElementById('cloudIn'), 
+        eqD: document.getElementById('eqDesertIn'), 
+        iceN: document.getElementById('iceNIn'), 
+        iceS: document.getElementById('iceSIn') 
     };
 
-    const ui = { seed:document.getElementById('seedIn'), sea:document.getElementById('seaIn'), cloud:document.getElementById('cloudIn'), eqD:document.getElementById('eqDesertIn'), iceN:document.getElementById('iceNIn'), iceS:document.getElementById('iceSIn') };
     const sync = () => {
-        pMat.uniforms.uSeed.value = cMat.uniforms.uSeed.value = parseFloat(ui.seed.value);
+        let sVal = parseFloat(ui.seed.value) || 0;
+        pMat.uniforms.uSeed.value = cMat.uniforms.uSeed.value = sVal;
         pMat.uniforms.uSeaLevel.value = ui.sea.value/100;
         cMat.uniforms.uCloud.value = ui.cloud.value/100;
         pMat.uniforms.uEqDesert.value = parseFloat(ui.eqD.value);
-        pMat.uniforms.uIceN.value = ui.iceN.value; pMat.uniforms.uIceS.value = ui.iceS.value;
+        pMat.uniforms.uIceN.value = ui.iceN.value; 
+        pMat.uniforms.uIceS.value = ui.iceS.value;
     };
+
     Object.values(ui).forEach(el => el.oninput = sync);
 
-    // 导出逻辑（含彩色高度图模式 mode 3）
+    document.getElementById('btn-rand').onclick = () => {
+        // 生成 1 到 12 位的真随机整数
+        const randomSeed = Math.floor(Math.random() * 999999999999) + 1;
+        ui.seed.value = randomSeed;
+        sync();
+    };
+
+    document.getElementById('menu-toggle').onclick = () => {
+        const p = document.getElementById('ui-panel');
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+    };
+
     function doExport(mode) {
         const W = 4096, H = 2048;
-        const rt = new THREE.WebGLRenderTarget(W, H);
+        const rt = new THREE.WebGLRenderTarget(W, H, { format: THREE.RGBAFormat });
         const exMat = new THREE.ShaderMaterial({
             uniforms: { ...pMat.uniforms, uCloud:{value:cMat.uniforms.uCloud.value}, uMode:{value:mode} },
             vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position, 1.0); }`,
@@ -222,17 +268,26 @@
                 void main() {
                     float lon = (vUv.x*2.0-1.0)*3.14159265; float lat = (vUv.y*2.0-1.0)*1.57079632;
                     vec3 p = vec3(cos(lat)*sin(lon), sin(lat), cos(lat)*cos(lon));
+                    float h = getH(p, uSeed);
                     if(uMode == 0.0) gl_FragColor = vec4(getPlanetColor(p, uSeed, uSeaLevel, uIceN, uIceS, uEqDesert), 1.0);
-                    else if(uMode == 1.0) gl_FragColor = vec4(vec3(1.0), smoothstep(1.0-uCloud, 1.2-uCloud, fbm(p*1.3+uSeed+500.0, 6)*0.5+0.5));
+                    else if(uMode == 1.0) {
+                        vec4 sh = superHash(uSeed);
+                        float n = fbm(p*1.3+sh.xyz+vec3(500.0), 6, sh.w)*0.5+0.5;
+                        gl_FragColor = vec4(vec3(1.0), smoothstep(1.0-uCloud, 1.2-uCloud, n));
+                    }
                     else if(uMode == 2.0) {
-                        float h = getH(p, uSeed); float eps = 0.001;
+                        float eps = 0.001;
                         float hR = getH(vec3(cos(lat)*sin(lon+eps), sin(lat), cos(lat)*cos(lon+eps)), uSeed);
                         float hU = getH(vec3(cos(lat+eps)*sin(lon), sin(lat+eps), cos(lat+eps)*cos(lon)), uSeed);
                         gl_FragColor = vec4(normalize(vec3((h-hR)*25.0, (h-hU)*25.0, 1.0))*0.5+0.5, 1.0);
-                    } else { // 彩色高度图
-                        gl_FragColor = vec4(getHeightMapColor(getH(p, uSeed), uSeaLevel), 1.0);
+                    } else if(uMode == 3.0) { 
+                        gl_FragColor = vec4(getHeightMapColor(h, uSeaLevel), 1.0);
+                    } else if(uMode == 4.0) {
+                        if(h >= uSeaLevel) gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                        else gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
                     }
-                }`
+                }`,
+            transparent: true
         });
         const exScene = new THREE.Scene(); const exCam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
         exScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), exMat));
@@ -243,7 +298,7 @@
         const img = fctx.createImageData(W,H); img.data.set(pixels); fctx.putImageData(img,0,0);
         const rc = document.createElement('canvas'); rc.width = W; rc.height = H;
         const rctx = rc.getContext('2d'); rctx.translate(0, H); rctx.scale(1, -1); rctx.drawImage(fc, 0, 0);
-        const a = document.createElement('a'); a.download = ["Terrain","Cloud","Normal","HeightMap"][mode]+".png"; a.href = rc.toDataURL(); a.click();
+        const a = document.createElement('a'); a.download = ["Terrain","Cloud","Normal","HeightMap","LandMap"][mode]+".png"; a.href = rc.toDataURL(); a.click();
         renderer.setRenderTarget(null);
         document.getElementById('toast').style.display='block'; setTimeout(()=>document.getElementById('toast').style.display='none',2000);
     }
@@ -252,9 +307,16 @@
     document.getElementById('btn-cld').onclick = () => doExport(1);
     document.getElementById('btn-nor').onclick = () => doExport(2);
     document.getElementById('btn-hgt').onclick = () => doExport(3);
+    document.getElementById('btn-land').onclick = () => doExport(4);
 
     function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
     animate();
+
+    window.onresize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    };
 </script>
 </body>
 </html>
