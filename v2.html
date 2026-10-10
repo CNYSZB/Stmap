@@ -53,13 +53,16 @@ input[type=range]:active::-webkit-slider-thumb{background:var(--accent)}
     <div class="slider-item"><div class="slider-header"><label>南极浮冰</label><input type="number" id="iceSFlVal" value="20" min="0" max="160"></div><input type="range" id="iceSFlIn" min="0" max="160" value="20"></div>
     <div class="slider-item"><div class="slider-header"><label>大陆集中度</label><input type="number" id="landClusterVal" value="64" min="0" max="100"></div><input type="range" id="landClusterIn" min="0" max="100" value="64"></div>
   </div>
-  <div class="export-strip">
-    <button class="export-btn" id="btn-geo">🌍 地形</button>
-    <button class="export-btn" id="btn-hgt">🗺️ 高度图</button>
-    <button class="export-btn" id="btn-cld">☁️ 云层</button>
-    <button class="export-btn" id="btn-nor">🧭 法线</button>
-    <button class="export-btn" id="btn-land">🏝️ 陆地</button>
-  </div>
+<div class="export-strip">
+  <button class="export-btn" id="btn-geo">🌍 地形</button>
+  <button class="export-btn" id="btn-hgt">🗺️ 高度图</button>
+  <button class="export-btn" id="btn-cld">☁️ 云层</button>
+  <button class="export-btn" id="btn-nor">🧭 法线</button>
+  <button class="export-btn" id="btn-land">🏝️ 陆地</button>
+  <input type="text" id="nameImport" placeholder="粘贴文件名（如：地形_种子123_海48_...）"
+  style="flex:1;min-width:160px;background:#1c1c1e;border:1px solid #3a3a3c;color:#00e5ff;padding:8px 12px;border-radius:40px;font-size:12px;outline:none">
+<button class="export-btn" id="btn-import">📥 解析名字</button>
+</div>
 </div>
 
 <script type="module">
@@ -177,11 +180,12 @@ vec2 hLow(vec3 p,out float sOut){
 #endif
     ridge=rg;
   }
-  float mtn=mask*ridge*smoothstep(0.0,0.12,s);
-  h+=mtn*0.38;
-  float bn=fbm(q*2.0+so+808.0,3,sh.w)*0.5+0.5;
-  h+=(smoothstep(0.6,0.8,bn)*0.06-(1.0-smoothstep(0.3,0.42,bn))*0.08)*smoothstep(0.05,0.3,s)*(1.0-mask);
-  sOut=s;return vec2(h,mtn);
+float mtn=mask*ridge*smoothstep(0.0,0.12,s);
+h+=mtn*0.38;
+float bn=fbm(q*2.0+so+808.0,3,sh.w)*0.5+0.5;
+h+=(smoothstep(0.6,0.8,bn)*0.06-(1.0-smoothstep(0.3,0.42,bn))*0.08)*smoothstep(0.05,0.3,s)*(1.0-mask);
+h=0.98-(0.98-h)*exp(-max(h-0.72,0.0)*3.0);
+sOut=s;return vec2(h,mtn);
 }
 
 vec2 gully(vec3 P,vec3 perp){
@@ -201,7 +205,6 @@ vec2 gully(vec3 P,vec3 perp){
 Ter terrain(vec3 p){
   Ter t;float s;vec2 hm=hLow(p,s);float h=hm.x;float sea=uSeaLevel;
   t.s=s;t.mtn=hm.y;t.river=0.0;gShade=0.0;
-  if(h<sea-0.14){t.h=clamp(h,0.0,0.98);return t;}
   vec4 sh=superHash(uSeed);vec3 so=sh.xyz;int oct=int(uOct);
   float crease=0.0,rvr=0.0,vly=0.0;
   if((uErode>0.5||uRiver>0.5)&&h>sea){
@@ -252,7 +255,8 @@ Ter terrain(vec3 p){
     h-=rvr*0.02+vly*0.02*(1.0-elev)+crease*0.012;
     t.river=max(rvr,crease*0.3);
   }
-  t.h=clamp(h,0.0,0.98);return t;
+  if(h<sea-0.14){t.h=clamp(h,0.0,0.995);return t;}
+  t.h=clamp(h,0.0,0.995);return t;
 }
 float getH(vec3 p){return terrain(p).h;}
 
@@ -325,9 +329,9 @@ vec3 getPlanetColor(vec3 p){
     //  极地雪线 0.50，赤道雪线 0.95 —— 现实中赤道只有乞力马扎罗级山峰带雪
     float snowLine = mix(0.50, 0.95, clamp(tSea, 0.0, 1.0));
     float sj = fbm(p*3.0+sh.xyz+310.0,3,sh.w)*0.15;
-    float snow = smoothstep(0.0, 0.04, elev-snowLine+sj)
-               * smoothstep(0.45, 0.68, T.mtn)
-               * smoothstep(0.30, 0.55, m);
+    float snow = smoothstep(-0.06, 0.10, elev-snowLine+sj)
+* smoothstep(0.30, 0.60, T.mtn)
+* smoothstep(0.20, 0.50, m);
     col = mix(col, vec3(0.94,0.95,0.97), snow);
 
     // ── 河流
@@ -499,15 +503,33 @@ async function doExport(mode){
       vec3 p=sp(lon,lat);
       if(uMode==0.0){gl_FragColor=vec4(getPlanetColor(p),1.0);}
       else if(uMode==1.0){vec4 sh=superHash(uSeed);float n=cloudField(p,sh.xyz,sh.w,6);gl_FragColor=vec4(1.0,1.0,1.0,smoothstep(1.0-uCloud,1.2-uCloud,n));}
-      else{
-        float h=getH(p);
-        if(uMode==2.0){
-          float eps=0.001;
-          float hR=getH(sp(lon+eps,lat));float hU=getH(sp(lon,lat+eps));
-          gl_FragColor=vec4(normalize(vec3((h-hR)*25.0,(h-hU)*25.0,1.0))*0.5+0.5,1.0);
-        }else if(uMode==3.0){gl_FragColor=vec4(hmCol(h,uSeaLevel),1.0);}
-        else{gl_FragColor=h>=uSeaLevel?vec4(0.0,0.0,0.0,1.0):vec4(0.0);}
-      }
+else{
+  float h=getH(p);
+  if(uMode==2.0){
+    float eps=0.001;
+    float hL=getH(sp(lon-eps,lat));
+    float hR=getH(sp(lon+eps,lat));
+    float hD=getH(sp(lon,lat-eps));
+    float hU=getH(sp(lon,lat+eps));
+    if(h<uSeaLevel){
+      hL=min(hL,uSeaLevel);
+      hR=min(hR,uSeaLevel);
+      hD=min(hD,uSeaLevel);
+      hU=min(hU,uSeaLevel);
+      h=uSeaLevel;
+    }else{
+      hL=max(hL,uSeaLevel);
+      hR=max(hR,uSeaLevel);
+      hD=max(hD,uSeaLevel);
+      hU=max(hU,uSeaLevel);
+    }
+    float dx=(hR-hL)*0.5;
+    float dy=(hU-hD)*0.5;
+    vec3 n=normalize(vec3(-dx*25.0,-dy*25.0,1.0));
+    gl_FragColor=vec4(n*0.5+0.5,1.0);
+  }else if(uMode==3.0){gl_FragColor=vec4(hmCol(h,uSeaLevel),1.0);}
+  else{gl_FragColor=h>=uSeaLevel?vec4(0.0,0.0,0.0,1.0):vec4(0.0);}
+}
     }`
   });
   const exScene = new THREE.Scene();
@@ -537,11 +559,73 @@ async function doExport(mode){
 }
 $('btn-geo').onclick=()=>doExport(0); $('btn-cld').onclick=()=>doExport(1); $('btn-nor').onclick=()=>doExport(2);
 $('btn-hgt').onclick=()=>doExport(3); $('btn-land').onclick=()=>doExport(4);
+// ---------- 导入图片复现 ----------
+// 文件名格式：名字_种子xxx_海xx_云xx_漠xx_北冰xx_南冰xx_北浮xx_南浮xx_聚xx.png
+function parseParamsFromName(name){
+  console.log('=== 开始解析文件名 ===');
+  console.log('原始 name =', name);
+  console.log('字符逐个 =', [...name].map(c=>c+':'+c.charCodeAt(0)).join(' '));
 
+  const patterns = {
+    seed:        /种子(\d+)/,
+    sea:         /海(\d+)/,
+    cloud:       /云(\d+)/,
+    eqDesert:    /漠(\d+)/,
+    iceN:        /北冰(\d+)/,
+    iceS:        /南冰(\d+)/,
+    iceNFI:      /北浮(\d+)/,
+    iceSFI:      /南浮(\d+)/,
+    landCluster: /聚(\d+)/
+  };
+
+  const out = {};
+  for (const k in patterns) {
+    const r = name.match(patterns[k]);
+    out[k] = r ? r[1] : null;
+    console.log(`  ${k.padEnd(12)} 匹配=`, r ? r[1] : '❌ 失败');
+  }
+  console.log('=== 解析结果 ===', out);
+  return out;
+}
+
+$('btn-import').onclick = () => {
+  const raw = $('nameImport').value.trim();
+  const toast = $('toast');
+  if (!raw) {
+    toast.textContent = '请先粘贴文件名';
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 2000);
+    return;
+  }
+
+  const params = parseParamsFromName(raw);
+  const found = Object.values(params).filter(v => v !== null).length;
+
+  if (found === 0) {
+    alert('没解析到参数\n你粘贴的内容：' + raw + '\n抓到数字：' + JSON.stringify(raw.match(/\d+/g) || []));
+    return;
+  }
+
+  if (params.seed !== null) $('seedIn').value = params.seed;
+  if (params.sea !== null) { $('seaIn').value = params.sea; $('seaVal').value = params.sea; }
+  if (params.cloud !== null) { $('cloudIn').value = params.cloud; $('cloudVal').value = params.cloud; }
+  if (params.eqDesert !== null) { $('eqDesertIn').value = params.eqDesert; $('eqDesertVal').value = params.eqDesert; }
+  if (params.iceN !== null) { $('iceNIn').value = params.iceN; $('iceNVal').value = params.iceN; }
+  if (params.iceS !== null) { $('iceSIn').value = params.iceS; $('iceSVal').value = params.iceS; }
+  if (params.iceNFI !== null) { $('iceNFlIn').value = params.iceNFI; $('iceNFlVal').value = params.iceNFI; }
+  if (params.iceSFI !== null) { $('iceSFlIn').value = params.iceSFI; $('iceSFlVal').value = params.iceSFI; }
+  if (params.landCluster !== null) { $('landClusterIn').value = params.landCluster; $('landClusterVal').value = params.landCluster; }
+
+  syncFromUI();
+
+  toast.textContent = `已恢复 ${found} 个参数`;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 2000);
+};
 // ---------- 循环 + 自适应画质 ----------
 function applyQuality(){
   renderer.setPixelRatio(Q_PIX[quality]);
-  plateU.uOct.value = Q_OCT[quality]; plateU.uErode.value = ($('erodeChk').checked && quality > 0) ? 1 : 0; plateU.uRiver.value = Q_RIV[quality];
+  plateU.uOct.value = Q_OCT[quality]; plateU.uErode.value = $('erodeChk').checked ? 1 : 0; plateU.uRiver.value = Q_RIV[quality];
   updateRendererSize();
 }
 let last = performance.now(), ema = 16, frames = 0;
@@ -549,7 +633,7 @@ function animate(){
   requestAnimationFrame(animate);
   const now = performance.now(), dt = Math.min(now-last, 200); last = now;
   ema = ema*0.95 + dt*0.05;
-  if (++frames % 90 === 0 && ema > 40 && quality > 0) { quality--; applyQuality(); ema = 16; }
+  if (++frames % 90 === 0 && ema > 40 && quality > 0 && !$('erodeChk').checked) { quality--; applyQuality(); ema = 16; }
   plateU.uLight.value.set(1,0.8,1).normalize().applyQuaternion(camera.quaternion);
   controls.update();
   renderer.render(scene, camera);
