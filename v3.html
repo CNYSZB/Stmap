@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>行星v2</title>
+<title>行星v3</title>
 <style>
 :root{--accent:#00e5ff;--menu-bg:rgba(20,20,20,.92);--panel-border:rgba(255,255,255,.15)}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -33,44 +33,112 @@ input[type=range]:active::-webkit-slider-thumb{background:var(--accent)}
 .export-btn:hover{background:#3a3a3d;border-color:var(--accent);color:#fff}
 .export-btn:active{transform:scale(.96);background:var(--accent);color:#000}
 #toast{position:fixed;bottom:45%;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);color:#000;padding:10px 24px;border-radius:40px;font-size:14px;font-weight:500;display:none;z-index:2000;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+@media (orientation: landscape) and (min-aspect-ratio: 4/3) {
+  body {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  #menu-section {
+    display: contents;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    padding: 0;
+    border-top: none;
+    box-shadow: none;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
+    flex: none;
+    z-index: auto;
+  }
+  .menu-panel {
+    flex: 0 0 280px;
+    height: 100dvh;
+    overflow-y: auto;
+    background: var(--menu-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    padding: 12px;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+  }
+  .menu-panel::-webkit-scrollbar { width: 4px; }
+  .menu-panel::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+  .menu-left {
+    order: 1;
+    border-right: 1px solid var(--panel-border);
+  }
+  .menu-right {
+    order: 3;
+    border-left: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+  }
+  #preview-area {
+    order: 2;
+    flex: 1 1 auto;
+    height: 100dvh;
+    border-bottom: none;
+    min-width: 0;
+  }
+  .menu-right .sliders-grid {
+    grid-template-columns: 1fr;
+    flex: 0 0 auto;
+  }
+  .menu-right .export-strip {
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: auto;
+  }
+  .menu-right .export-strip input[type=text] {
+    min-width: 0;
+  }
+}
 </style>
 </head>
 <body>
 <div id="toast">贴图已导出</div>
 <div id="preview-area"></div>
 <div id="menu-section">
-<div class="menu-header"><span class="menu-title"><i>◉</i> 星球参数</span><span style="font-size:11px;color:#888;">实时预览</span></div>
-<div class="seed-row"><input type="number" id="seedIn" value="252477863304" min="0" max="999999999999"><button id="btn-rand">🎲 随机</button></div>
-<div class="seed-row" style="margin-top:-4px"><select id="algoSel" style="flex:1;width:100%;background:#1c1c1e;border:1px solid #3a3a3c;color:var(--accent);padding:10px 12px;border-radius:32px;font-size:13px;outline:none"><option value="1" selected>算法：真实（Worley / 脊线 / 域旋转）</option><option value="0">算法：经典</option></select></div>
-<div class="seed-row" style="margin-top:-4px;justify-content:space-between"><label for="erodeChk" style="font-size:13px;color:#ccc;padding-left:10px">地形起伏光照（法线阴影，较卡）</label><input type="checkbox" id="erodeChk" style="width:22px;height:22px;margin-right:10px;accent-color:#00e5ff"></div>
-<div class="sliders-grid">
-<div class="slider-item"><div class="slider-header"><label>海平面</label><input type="number" id="seaVal" value="48" min="0" max="100"></div><input type="range" id="seaIn" min="0" max="100" value="48"></div>
-<div class="slider-item"><div class="slider-header"><label>云层密度(正在筹备更新)</label><input type="number" id="cloudVal" value="50" min="0" max="100"></div><input type="range" id="cloudIn" min="0" max="100" value="50"></div>
-<div class="slider-item"><div class="slider-header"><label>赤道沙漠化</label><input type="number" id="eqDesertVal" value="20" min="0" max="100"></div><input type="range" id="eqDesertIn" min="0" max="100" value="20"></div>
-<div class="slider-item"><div class="slider-header"><label>北极冰盖</label><input type="number" id="iceNVal" value="40" min="0" max="180"></div><input type="range" id="iceNIn" min="0" max="180" value="40"></div>
-<div class="slider-item"><div class="slider-header"><label>南极冰盖</label><input type="number" id="iceSVal" value="40" min="0" max="180"></div><input type="range" id="iceSIn" min="0" max="180" value="40"></div>
-<div class="slider-item"><div class="slider-header"><label>北极浮冰</label><input type="number" id="iceNFlVal" value="20" min="0" max="180"></div><input type="range" id="iceNFlIn" min="0" max="180" value="20"></div>
-<div class="slider-item"><div class="slider-header"><label>南极浮冰</label><input type="number" id="iceSFlVal" value="20" min="0" max="180"></div><input type="range" id="iceSFlIn" min="0" max="180" value="20"></div>
-<div class="slider-item"><div class="slider-header"><label>大陆集中度</label><input type="number" id="landClusterVal" value="64" min="0" max="100"></div><input type="range" id="landClusterIn" min="0" max="100" value="64"></div>
-</div>
-<div class="seed-row" style="flex-wrap:wrap;gap:6px;margin-top:2px"><span style="font-size:12px;color:#ccc;padding-left:8px">🌀 台风</span><select id="stormSel" style="background:#1c1c1e;border:1px solid #3a3a3c;color:var(--accent);padding:8px 10px;border-radius:32px;font-size:12px"><option value="0">台风1</option><option value="1">台风2</option><option value="2">台风3</option><option value="3">台风4</option><option value="4">台风5</option><option value="5">台风6</option></select><button id="btn-place" style="padding:8px 12px;font-size:12px">📍点星球放置</button><button id="btn-autostorm" style="padding:8px 12px;font-size:12px">🎲自动布置</button></div>
-<div class="sliders-grid" style="margin-bottom:12px"><div class="slider-item"><div class="slider-header"><label>台风数量</label><input type="number" id="stormCntVal" value="0" min="0" max="6"></div><input type="range" id="stormCntIn" min="0" max="6" value="0"></div><div class="slider-item"><div class="slider-header"><label>所选台风烈度</label><input type="number" id="stormIntVal" value="60" min="0" max="100"></div><input type="range" id="stormIntIn" min="0" max="100" value="60"></div></div>
-<div class="export-strip">
-<button class="export-btn" id="btn-geo">🌍 地形</button>
-<button class="export-btn" id="btn-hgt">🗺️ 高度图</button>
-<button class="export-btn" id="btn-cld">☁️ 云层</button>
-<button class="export-btn" id="btn-nor">🧭 法线</button>
-<button class="export-btn" id="btn-land">🏝️ 陆地</button>
-<input type="text" id="nameImport" placeholder="粘贴文件名（如：地形_种子123_海48_...）"
-style="flex:1;min-width:160px;background:#1c1c1e;border:1px solid #3a3a3c;color:#00e5ff;padding:8px 12px;border-radius:40px;font-size:12px;outline:none">
-<button class="export-btn" id="btn-import">📥 解析名字</button>
-</div>
+  <div class="menu-panel menu-left">
+    <div class="menu-header"><span class="menu-title"><i>◉</i> 星球参数</span><span style="font-size:11px;color:#888;">实时预览</span></div>
+    <div class="seed-row"><input type="number" id="seedIn" value="252477863304" min="0" max="999999999999"><button id="btn-rand">🎲 随机</button></div>
+    <div class="seed-row" style="margin-top:-4px"><select id="algoSel" style="flex:1;width:100%;background:#1c1c1e;border:1px solid #3a3a3c;color:var(--accent);padding:10px 12px;border-radius:32px;font-size:13px;outline:none"><option value="1" selected>算法：真实（Worley / 脊线 / 域旋转）</option><option value="0">算法：经典</option></select></div>
+    <div class="seed-row" style="margin-top:-4px;justify-content:space-between"><label for="erodeChk" style="font-size:13px;color:#ccc;padding-left:10px">地形起伏光照（法线阴影，较卡）</label><input type="checkbox" id="erodeChk" style="width:22px;height:22px;margin-right:10px;accent-color:#00e5ff"></div>
+    <div class="seed-row" style="margin-top:-4px;justify-content:space-between"><label for="lightLockChk" style="font-size:13px;color:#ccc;padding-left:10px">光照锁定（开启=光跟随屏幕；关闭=光固定，可调时间）</label><input type="checkbox" id="lightLockChk" checked style="width:22px;height:22px;margin-right:10px;accent-color:#00e5ff"></div>
+  </div>
+  <div class="menu-panel menu-right">
+    <div class="sliders-grid">
+      <div class="slider-item"><div class="slider-header"><label>时间（小时）</label><input type="number" id="timeVal" value="12" min="0" max="24"></div><input type="range" id="timeIn" min="0" max="24" value="12"></div>
+      <div class="slider-item"><div class="slider-header"><label>海平面</label><input type="number" id="seaVal" value="48" min="0" max="100"></div><input type="range" id="seaIn" min="0" max="100" value="48"></div>
+      <div class="slider-item"><div class="slider-header"><label>云层密度</label><input type="number" id="cloudVal" value="50" min="0" max="100"></div><input type="range" id="cloudIn" min="0" max="100" value="50"></div>
+      <div class="slider-item"><div class="slider-header"><label>赤道沙漠化</label><input type="number" id="eqDesertVal" value="20" min="0" max="100"></div><input type="range" id="eqDesertIn" min="0" max="100" value="20"></div>
+      <div class="slider-item"><div class="slider-header"><label>北极冰盖</label><input type="number" id="iceNVal" value="40" min="0" max="180"></div><input type="range" id="iceNIn" min="0" max="180" value="40"></div>
+      <div class="slider-item"><div class="slider-header"><label>南极冰盖</label><input type="number" id="iceSVal" value="40" min="0" max="180"></div><input type="range" id="iceSIn" min="0" max="180" value="40"></div>
+      <div class="slider-item"><div class="slider-header"><label>北极浮冰</label><input type="number" id="iceNFlVal" value="20" min="0" max="180"></div><input type="range" id="iceNFlIn" min="0" max="180" value="20"></div>
+      <div class="slider-item"><div class="slider-header"><label>南极浮冰</label><input type="number" id="iceSFlVal" value="20" min="0" max="180"></div><input type="range" id="iceSFlIn" min="0" max="180" value="20"></div>
+      <div class="slider-item"><div class="slider-header"><label>大陆集中度</label><input type="number" id="landClusterVal" value="64" min="0" max="100"></div><input type="range" id="landClusterIn" min="0" max="100" value="64"></div>
+    </div>
+    <div class="export-strip">
+      <button class="export-btn" id="btn-geo">🌍 地形</button>
+      <button class="export-btn" id="btn-hgt">🗺️ 高度图</button>
+      <button class="export-btn" id="btn-cld">☁️ 云层</button>
+      <button class="export-btn" id="btn-nor">🧭 法线</button>
+      <button class="export-btn" id="btn-land">🏝️ 陆地</button>
+      <button class="export-btn" id="btn-light">🌃 文明灯光</button>
+      <input type="text" id="nameImport" placeholder="粘贴文件名（如：地形_种子123_海48_...）"
+      style="flex:1;min-width:160px;background:#1c1c1e;border:1px solid #3a3a3c;color:#00e5ff;padding:8px 12px;border-radius:40px;font-size:12px;outline:none">
+      <button class="export-btn" id="btn-import">📥 解析名字</button>
+    </div>
+  </div>
 </div>
 <script type="module">
 import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
 import { OrbitControls } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js';
 
-// ---------- 噪声：经典(uAlgo=0) + 真实版(uAlgo=1) ----------
 const noiseShader = `
 uniform float uAlgo;
 vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
@@ -117,7 +185,6 @@ return v;
 }
 float acTurb(vec3 p,int oct,float shift){float v=0.0,amp=0.5;p=acSeedRot(p,shift);for(int i=0;i<6;i++){if(i>=oct)break;v+=amp*abs(snoise(p+shift));p=AC_ROT*p*AC_LACUN;amp*=AC_GAIN;}return v;}
 float acRidged(vec3 p,int oct,float shift){float v=0.0,amp=0.5,w=1.0;p=acSeedRot(p,shift);for(int i=0;i<6;i++){if(i>=oct)break;float n=1.0-abs(snoise(p+shift));n*=n;n*=w;w=clamp(n*2.0,0.0,1.0);v+=n*amp;p=AC_ROT*p*AC_LACUN;amp*=AC_GAIN;}return v;}
-// ---- 带解析导数的梯度噪声(iq) + 坡度抑制侵蚀fbm ----
 vec3 hgrad(vec3 c){return acHash3(c)*2.0-1.0;}
 vec4 noised(vec3 x){
 vec3 i=floor(x);vec3 w=fract(x);
@@ -142,10 +209,19 @@ vec4 n=noised(p+shift);d+=n.yzw;a+=b*n.x/(1.0+k*dot(d,d));b*=0.5;p=AC_ROT*p*2.0;
 return a;
 }
 vec2 worley3(vec3 p){vec3 ip=floor(p),fp=p-ip;float d1=8.0,d2=8.0;for(int z=-1;z<=1;z++)for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){vec3 o=vec3(float(x),float(y),float(z));vec3 d=o+acHash3(ip+o)-fp;float dd=dot(d,d);if(dd<d1){d2=d1;d1=dd;}else if(dd<d2){d2=dd;}}return sqrt(vec2(d1,d2));}
+float worleyF1(vec3 p){
+vec3 ip=floor(p),fp=p-ip;float d1=8.0;
+for(int z=-1;z<=1;z++)for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){
+vec3 o=vec3(float(x),float(y),float(z));
+vec3 d=o+acHash3(ip+o)-fp;
+d1=min(d1,dot(d,d));
+}
+return sqrt(d1);
+}
 float cloudField(vec3 p,vec3 off,float ph,int oct){
-vec3 q=p*1.3;q.y*=1.8;q+=off+vec3(500.0);   // 纬向压缩→东西向云带
+vec3 q=p*1.3;q.y*=1.8;q+=off+vec3(500.0);
 if(uAlgo<0.5)return fbm(q,oct,ph)*0.5+0.5;
-vec3 w=vec3(snoise(q*0.7+3.1),snoise(q*0.7+7.7),snoise(q*0.7+11.3))*0.12;   // 扭曲幅度大幅降低
+vec3 w=vec3(snoise(q*0.7+3.1),snoise(q*0.7+7.7),snoise(q*0.7+11.3))*0.12;
 float f=fbm(q+w,oct,ph)*0.5+0.5;
 float t=acTurb(q*2.2+w,3,ph);
 return clamp(f+(t-0.3)*0.25,0.0,1.0);
@@ -163,79 +239,53 @@ const uniDecl = `
 uniform float uSeed,uSeaLevel,uIceN,uIceS,uIceNFI,uIceSFI,uEqDesert,uLandCluster,uOct,uErode,uRiver;
 uniform vec4 uPlates[7];uniform vec3 uPlateV[7];uniform vec4 uCont[5];uniform vec4 uContAx[5];uniform vec3 uLight;`;
 
-// ---------- 地形 + 气候 + 生物群系（真实配色）----------
 const contDecl = `uniform vec4 uCont[5];uniform vec4 uContAx[5];`;
-const stormDecl = `uniform vec4 uStorm[6];uniform float uStormN;`;
-// 湿度系统：ITCZ(赤道多云) / 副热带高压(少云) / 中纬风暴带(多云) / 极地 + 海陆差异；接入云量计算
 const cloudLogic = `
 float contS(vec3 p){float s=-9.0;for(int i=0;i<5;i++){vec3 c=uCont[i].xyz;vec3 ax=uContAx[i].xyz;float dt=dot(p,c);float t=dot(p,ax);float t2=t*t/max(1.0-dt*dt,1e-4);float d=(1.0-dt)*(1.0+uContAx[i].w*(1.0-t2));s=max(s,uCont[i].w-d);}return s;}
-float humidity(vec3 p){
-float l=abs(p.y);
-float itcz=exp(-(l/0.12)*(l/0.12));
-float mid=exp(-((l-0.62)/0.16)*((l-0.62)/0.16));
-float sub=exp(-((l-0.33)/0.10)*((l-0.33)/0.10));
-float pol=exp(-((l-0.90)/0.12)*((l-0.90)/0.12));
-float land=smoothstep(-0.05,0.20,contS(p));
-return clamp(0.40+0.50*itcz+0.40*mid+0.15*pol-0.32*sub+0.10*(1.0-land)-0.12*land,0.0,1.0);
-}
+const float CLD_ITCZ_Y=0.05, CLD_ITCZ_W=0.10;
+const float CLD_SC=0.95, CLD_CU=0.70, CLD_MID=0.65, CLD_POL=0.40;
 vec2 cloudAlpha(vec3 p,int oct){
 vec4 sh=superHash(uSeed);
-float n=cloudField(p,sh.xyz,sh.w,oct)+(humidity(p)-0.45)*0.5;
-float a=smoothstep(1.0-uCloud,1.2-uCloud,n)*0.7;
-float eyeBase=1.0,sa=0.0,supp=0.0;
-for(int i=0;i<6;i++){
-vec4 st=uStorm[i];
-if(st.w<=0.0)continue;
-vec3 c=st.xyz;float cd=dot(p,c);
-if(cd<0.5)continue;
-float I=st.w;float r=acos(clamp(cd,-1.0,1.0));
-vec3 t1=normalize(cross(c,abs(c.y)<0.9?vec3(0.0,1.0,0.0):vec3(1.0,0.0,0.0)));
-vec3 t2=cross(c,t1);
-float phi=atan(dot(p,t2),dot(p,t1));
-float hand=c.y>=0.0?1.0:-1.0;
-float R=0.10+0.20*I;
-float core=exp(-pow(r/R,1.5));
-float ph=2.0*phi*hand+8.0*log(r+0.02)+0.8*snoise(p*7.0+sh.xyz);
-float arm=0.5+0.5*cos(ph);
-float body=core*(0.45+0.55*arm)*(0.8+0.4*(snoise(p*18.0+sh.xyz)*0.5+0.5));
-float eyeStr=smoothstep(0.3,0.7,I);
-float Reye=0.014+0.012*(1.0-I);
-float eyeM=1.0-eyeStr*(1.0-smoothstep(Reye,Reye*2.4,r));
-sa=max(sa,body*eyeM*(0.35+0.65*I));
-supp=max(supp,core*(1.0-arm)*0.85*(0.4+0.6*I));   // 螺旋臂之间让出底层云，显出旋臂
-eyeBase=min(eyeBase,eyeM);
+float y=abs(p.y);float cl=0.0;
+float land=smoothstep(-0.05,0.20,contS(p));
+vec3 q=p*1.5;q.y*=1.5;q+=sh.xyz+vec3(500.0);
+float mfL=fbm(q*1.6,oct,sh.w)*0.5+0.5;
+float mfS=fbm(q*5.5,3,sh.w)*0.5+0.5;
+float mf=0.62*mfL+0.38*mfS;
+float itcz=exp(-pow((p.y-CLD_ITCZ_Y-0.03*sin(atan(p.x,p.z)*3.0+sh.w))/CLD_ITCZ_W,2.0));
+float mid=smoothstep(0.40,0.55,y)*(1.0-smoothstep(0.88,0.95,y));
+float pol=smoothstep(0.80,0.90,y);
+float sub=smoothstep(0.12,0.22,y)*(1.0-smoothstep(0.38,0.48,y));
+float westCoast=0.0;
+if(sub>0.01){
+vec3 pe=normalize(p+normalize(cross(vec3(0.0,1.0,0.0),p))*0.18);
+westCoast=smoothstep(-0.12,0.08,contS(pe))*(1.0-land)*sub;
 }
-return vec2(clamp(a*eyeBase*(1.0-supp)+sa*0.9,0.0,0.95),1.0-0.18*sa);
+float cv=CLD_CU*0.64+0.12*itcz+CLD_MID*0.17*mid+CLD_POL*0.12*pol-0.30*sub*land-0.05*sub*(1.0-land)+CLD_SC*0.18*westCoast;
+float th=0.5-(cv-0.5)*0.45-(uCloud-0.5)*0.7;
+cl=smoothstep(th-0.10,th+0.10,mf);
+float thk=smoothstep(th,th+0.30,mf);
+cl=clamp(cl,0.0,1.25);
+float alpha=smoothstep(0.08,0.60,cl)*0.93;
+float shade=mix(0.80,1.0,max(smoothstep(0.25,1.1,cl),thk));
+return vec2(clamp(alpha,0.0,0.95),shade);
 }`;
+
 const planetLogic = `
-// ===== PLANET_CFG 可调参数 =====
-// 气候：海拔降温指数/强度；雪线温度阈值
 const float CLIM_LAPSE_POW=1.4, CLIM_LAPSE_K=0.45;
 const float SNOW_T0=0.30, SNOW_T1=0.58;
-// 积雪：过渡带宽度(越大越渐变)、边缘碎裂/斑驳程度
 const float SNOW_SOFT=0.30, SNOW_PATCH=0.60;
-// 板块边界扭曲：大尺度/小尺度（越大越不规整）
 const float PLATE_WARP=0.06, PLATE_WARP2=0.015;
-// 大陆轮廓：域扭曲(大/小)、粗糙度、裂谷海(分离型边界)
 const float CONT_WARP=0.12, CONT_WARP2=0.04, CONT_RAGGED=0.10, RIFT_A=0.10;
-// 海岸线：扰动带宽、大/小尺度幅度、板块缝合线加权
 const float COAST_BAND=0.18, COAST_A1=0.05, COAST_A2=0.025, COAST_PLATE=1.5;
-// 造山带(仅挤压型边界)：宽度、断续度下/上阈值、高原抬升量
 const float ORO_W=0.13, SEG_LO=0.35, SEG_HI=0.65, ORO_UPLIFT=0.05;
-// 侵蚀山地：坡度抑制强度(越大山坡越平滑、山谷越分明)、与脊线混合比例
 const float ERO_K=1.0, ERO_MIX=0.55;
-// 地貌省：高原阈值/抬升、盆地阈值/下陷、丘陵幅度
 const float PLAT_LO=0.55, PLAT_H=0.13, BASIN_HI=0.43, BASIN_D=0.10, HILL_A=0.18, HILL_A2=0.5;
-// 地貌着色：盆地/高原/丘陵对反照率的影响强度
 const float BASIN_TINT=0.55, PLAT_TINT=0.60, HILL_TINT=1.5;
-// 烘焙式地形光影(写进颜色里，导出贴图也带)：强度/灵敏度；细节噪点强度
 const float RELIEF_A=0.50, RELIEF_K=0.25, DETAIL_A=0.07;
-// 海底：陆架宽度、深海加深量、海沟深度、起伏幅度
 const float OCEAN_SHELF=0.06, OCEAN_DEEP=0.12, OCEAN_TRENCH=0.05, OCEAN_UNDUL=0.06, OCEAN_RIDGE=0.07;
-// 海底光影放大倍数
 const float OCEAN_RELIEF=1.5;
-// 冰盖：边缘柔和度、海拔对冰线的影响(越大高处冰盖越向低纬延伸)
-const float FLOE_SHALLOW=0.08;   // 浅海更易结冰：数值越大，大陆架/浅水处浮冰越向低纬延伸
+const float FLOE_SHALLOW=0.08;
 const float ICE_SOFT=0.05, ICE_ELEV=0.08;
 
 struct Ter{float h;float river;float s;float mtn;float plat;float bas;float hill;};
@@ -246,8 +296,8 @@ vec2 hLow(vec3 p,out float sOut){
 vec4 sh=superHash(uSeed);vec3 so=sh.xyz;int oct=int(uOct);
 vec3 w=vec3(snoise(p*0.9+so+11.0),snoise(p*0.9+so+37.0),snoise(p*0.9+so+71.0));
 vec3 w2=vec3(snoise(p*2.4+so+19.0),snoise(p*2.4+so+43.0),snoise(p*2.4+so+83.0));
-vec3 qc=normalize(p+w*CONT_WARP+w2*CONT_WARP2);   // 只用于大陆轮廓
-vec3 q=normalize(p);                                // 其余噪声不扭曲，避免条纹拉伸
+vec3 qc=normalize(p+w*CONT_WARP+w2*CONT_WARP2);
+vec3 q=normalize(p);
 float s=-9.0;
 for(int i=0;i<5;i++){
 vec3 c=uCont[i].xyz;vec3 ax=uContAx[i].xyz;
@@ -255,7 +305,6 @@ float dt=dot(qc,c);float t=dot(qc,ax);float t2=t*t/max(1.0-dt*dt,1e-4);
 float d=(1.0-dt)*(1.0+uContAx[i].w*(1.0-t2));
 s=max(s,uCont[i].w-d);
 }
-// --- 板块查找（边界被噪声扭曲，不再是规整圆弧）+ 相对运动 ---
 vec3 pw=normalize(q+vec3(snoise(q*2.0+so+101.0),snoise(q*2.0+so+131.0),snoise(q*2.0+so+171.0))*PLATE_WARP+vec3(snoise(q*5.5+so+201.0),snoise(q*5.5+so+231.0),snoise(q*5.5+so+271.0))*PLATE_WARP2);
 float d1=9.0,d2=9.0,d3=9.0;vec3 c1=vec3(0.0),c2=vec3(0.0),v1=vec3(0.0),v2=vec3(0.0);
 for(int i=0;i<7;i++){
@@ -267,10 +316,10 @@ else if(d<d3){d3=d;}
 float bd=d2-d1;
 vec3 ac=c2-c1;ac-=q*dot(ac,q);ac/=max(length(ac),1e-4);
 vec3 vv1=v1-q*dot(v1,q),vv2=v2-q*dot(v2,q);
-float conv=dot(vv1,ac)-dot(vv2,ac);      // >0 挤压碰撞  <0 拉张分离
+float conv=dot(vv1,ac)-dot(vv2,ac);
 float cvF=smoothstep(0.1,0.9,conv);
 float dvF=smoothstep(0.1,0.9,-conv);
-float jn=smoothstep(0.0,0.04,d3-d2);   // 第二/第三近板块等距线处淡出，消除断裂
+float jn=smoothstep(0.0,0.04,d3-d2);
 cvF*=jn;dvF*=jn;
 s+=0.25*fbm(q*1.8+so+5.0,3,sh.w)+0.09*fbm(q*5.0+so+9.0,2,sh.w)+CONT_RAGGED*fbm(q*3.4+so+61.0,3,sh.w);
 s-=RIFT_A*dvF*(1.0-smoothstep(0.0,0.06,bd));
@@ -285,7 +334,6 @@ h-=ocw*(OCEAN_DEEP*smoothstep(OCEAN_SHELF,OCEAN_SHELF+0.25,-s)
  +OCEAN_UNDUL*(fbm(q*3.0+so+31.0,3,sh.w)*0.5+0.5));
 float landF=smoothstep(-0.05,0.15,s);
 h+=fbm(q*2.0+so,oct<4?oct:4,sh.w)*0.08*(0.4+0.6*landF);
-// --- 地貌省：高原 / 盆地 / 丘陵（让大陆内部有起伏，不全是平原）---
 float pv=fbm(q*1.5+so+505.0,3,sh.w)*0.5+0.5;
 float inl2=smoothstep(0.06,0.25,s);
 float plat=smoothstep(PLAT_LO,PLAT_LO+0.16,pv)*inl2;
@@ -301,7 +349,6 @@ hv=(hill+HILL_A2*hill2)*rf*landF*(1.0+plat)*hv0;
 h+=hv*HILL_A*2.0;
 }
 gPlat=plat;gBas=bas;gHill=hv;
-// --- 造山带：只在板块挤压处，断续分布，宽度随碰撞强度变化 ---
 float orog=(1.0-smoothstep(0.0,ORO_W*(0.5+0.5*clamp(conv,0.0,1.5)),bd))*cvF;
 float seg=smoothstep(SEG_LO,SEG_HI,fbm(q*3.2+so+909.0,2,sh.w)*0.5+0.5);
 float nm=smoothstep(0.5,0.72,fbm(q*1.8+so+444.0,3,sh.w)*0.5+0.5);
@@ -401,12 +448,64 @@ t.h=clamp(h,0.0,0.995);return t;
 }
 float getH(vec3 p){return terrain(p).h;}
 
-// ══════════════════════════════════════════════════════════════
-// 真实配色核心：所有色板取自卫星影像；沙漠/岩石/雪线都被严格限制
-// ══════════════════════════════════════════════════════════════
-vec3 getPlanetColor(vec3 p){
+float civLights(vec3 p, Ter T){
 vec4 sh=superHash(uSeed);
-Ter T=terrain(p);
+float h=T.h;float sea=uSeaLevel;
+if(h<sea+0.015)return 0.0;
+float elev=h-sea;
+float lat=abs(p.y);
+float tSea=1.0-pow(lat,1.35)*1.05;
+float t=tSea-pow(max(elev,1e-4),CLIM_LAPSE_POW)*CLIM_LAPSE_K+fbm(p*1.6+sh.xyz+77.0,2,sh.w)*0.06;
+float coldGate = 1.0 - smoothstep(0.70, 0.86, lat);
+float tempGate = smoothstep(-0.08, 0.16, t);
+if(coldGate*tempGate < 0.01) return 0.0;
+float tOpt=exp(-pow((t-0.58)/0.30,2.0));
+float hadley=0.12+0.62*exp(-pow(lat/0.28,2.0))+0.42*exp(-pow((lat-0.78)/0.22,2.0));
+float inl=smoothstep(0.02,0.30,T.s);
+float mn=fbm(p*1.9+sh.xyz+123.4,3,sh.w)*0.5+0.5;
+float moist=hadley*(1.0-0.45*inl)+(mn-0.5)*0.55+0.30-elev*0.20;
+float pOpt=smoothstep(0.10,0.30,moist)*(1.0-smoothstep(0.80,0.96,moist));
+float altW=1.0-smoothstep(0.06,0.24,elev);
+float riverW=T.river;
+float coastW=1.0-smoothstep(0.0,0.14,abs(T.s));
+float flatW=1.0-smoothstep(0.05,0.45,T.mtn);
+float waterW=clamp(riverW*0.8+coastW*0.5,0.0,1.0);
+float terrainW=0.45+0.55*flatW;
+float classic=tOpt*pOpt*altW*terrainW*(0.55+0.45*waterW);
+float coastal=coastW;
+float estuary=smoothstep(0.0,0.5,riverW)*coastW;
+float flatLow=flatW*(1.0-smoothstep(0.02,0.10,elev));
+float midLat=1.0-smoothstep(0.55,0.85,lat);
+float potential=(coastal*0.45 + estuary*0.55 + flatLow*0.35)*midLat;
+potential=clamp(potential,0.0,1.0);
+float suit=clamp(max(classic, potential*0.85) + classic*potential*0.3, 0.0, 1.0);
+suit *= coldGate * tempGate;
+float region=fbm(p*3.0+sh.xyz+900.0,3,sh.w)*0.5+0.5;
+float regionMask=smoothstep(0.30,0.58,region);
+if(regionMask<0.01)return 0.0;
+float f1L=worleyF1(p*6.0  + sh.w*1.7);
+float metro=smoothstep(0.62,0.08,f1L);
+float f1M=worleyF1(p*16.0 + sh.w*2.3);
+float city=smoothstep(0.58,0.10,f1M);
+float f1S=worleyF1(p*38.0 + sh.w*3.1);
+float town=smoothstep(0.55,0.15,f1S);
+float brightL=fbm(p*8.0+sh.xyz+1300.0,2,sh.w)*0.5+0.5;
+float brightM=fbm(p*20.0+sh.xyz+1310.0,2,sh.w)*0.5+0.5;
+float brightS=fbm(p*44.0+sh.xyz+1320.0,2,sh.w)*0.5+0.5;
+float coreTex=fbm(p*90.0+sh.xyz+1400.0,2,sh.w)*0.5+0.5;
+float urbanCore=pow(smoothstep(0.42,0.85,coreTex),1.3);
+float lights=0.0;
+lights+=metro*(0.65+0.35*brightL)*(0.40+0.60*urbanCore);
+lights+=city*(0.55+0.45*brightM)*(0.30+0.70*urbanCore);
+lights+=town*(0.45+0.55*brightS)*(0.20+0.80*urbanCore);
+float shoreBand = waterW * 0.50;
+lights += shoreBand * (0.4 + 0.6*urbanCore);
+lights*=suit*regionMask*2.4;
+return clamp(lights,0.0,1.0);
+}
+
+vec3 getPlanetColor(vec3 p, Ter T, out float seaMask){
+vec4 sh=superHash(uSeed);
 float h=T.h;float sea=uSeaLevel;
 float aaW=clamp(fwidth(h)*1.25,1e-4,0.02);
 float pxs=max(length(fwidth(p)),1e-5);
@@ -415,26 +514,21 @@ bool isLand=h>=sea;
 float lat=p.y;float al=abs(lat);
 vec3 col;
 if(!isLand){
-// ── 海洋：大陆架青绿 → 深海靛蓝
 float dpt=clamp((sea-h)/max(sea,1e-3),0.0,1.0);
 col=mix(vec3(0.13,0.40,0.47),vec3(0.05,0.17,0.33),smoothstep(0.00,0.12,dpt));
 col=mix(col,vec3(0.01,0.05,0.15),smoothstep(0.12,0.55,dpt));
 float oc=fbm(p*1.3+sh.xyz+640.0,3,sh.w)*0.5+0.5;
 col*=0.94+0.12*oc;
 {float rd=-dot(gr,vec2(-0.7,0.7))*RELIEF_K*OCEAN_RELIEF;col*=1.0+rd/(1.0+abs(rd))*RELIEF_A;}
-col=mix(col,vec3(0.72,0.68,0.52),(1.0-smoothstep(0.0,aaW,sea-h))*0.45);
 }else{
 float elev=(h-sea)/(1.0-sea);
-// ── 温度：纬度余弦带 + 海拔非线性递减 + 低频扰动（补丁1）
 float tSea=1.0-pow(al,1.35)*1.05;
 float t=tSea-pow(max(elev,1e-4),CLIM_LAPSE_POW)*CLIM_LAPSE_K+fbm(p*1.6+sh.xyz+77.0,3,sh.w)*0.10;
-// ── 湿度：哈得来带 + 内陆递减 + 河流加成 + 赤道沙漠化
 float hadley=0.12+0.62*exp(-(al/0.28)*(al/0.28))+0.42*exp(-((al-0.78)/0.22)*((al-0.78)/0.22));
 float inl=smoothstep(0.02,0.30,T.s);
 float mn=fbm(p*1.9+sh.xyz+123.4,4,sh.w)*0.5+0.5;
 float areaLimit=pow(max(0.0,1.0-al*2.5),1.8);
 float m=hadley*(1.0-0.45*inl)+(mn-0.5)*0.55+0.30-elev*0.20+T.river*0.25-uEqDesert/100.0*areaLimit*0.7;
-// ── 真实色板
 vec3 sand =vec3(0.82,0.73,0.52);
 vec3 dune =vec3(0.68,0.52,0.34);
 vec3 savanna=vec3(0.52,0.52,0.28);
@@ -458,8 +552,6 @@ hi = mix(vec3(0.42,0.40,0.34), hi, smoothstep(0.18, 0.38, t));
 col = mix(col, hi, plateau * 0.50);
 float rockF = smoothstep(0.42, 0.68, T.mtn) * smoothstep(0.25, 0.50, elev);
 col = mix(col, rock, rockF * 0.55);
-// ── 高山积雪：渐变覆盖 + 碎裂边缘 + 冷灰过渡带
-// ── 地貌色彩：盆地 / 高原 / 丘陵 直接体现在反照率上
 col=mix(col,vec3(0.74,0.67,0.52),T.bas*BASIN_TINT*(1.0-smoothstep(0.15,0.50,m)));
 col=mix(col,forest*1.1,T.bas*0.35*smoothstep(0.30,0.60,m));
 vec3 platC=mix(vec3(0.60,0.53,0.38),vec3(0.46,0.47,0.30),smoothstep(0.20,0.50,m));
@@ -487,17 +579,8 @@ col = mix(col, col*0.55+vec3(0.28,0.28,0.27), smoothstep(0.0,0.5,cov)*0.35*(1.0-
 col = mix(col, snowCol, snow);
 {float rd=-dot(gr,vec2(-0.7,0.7))*RELIEF_K;col*=1.0+rd/(1.0+abs(rd))*RELIEF_A*smoothstep(0.0,0.02,h-sea);}
 col = mix(col, vec3(0.10,0.25,0.31), smoothstep(0.30,0.65,T.river));
-float beach = (1.0 - smoothstep(0.0, 0.03, h-sea)) * smoothstep(0.30, 0.50, t) * (1.0-snow);
-col = mix(col, vec3(0.80,0.73,0.54), beach*0.8);
-col = mix(col, vec3(0.70,0.66,0.50), (1.0-smoothstep(0.0,aaW,h-sea))*0.45*(1.0-snow));
 }
-// ══ V2 极地冰雪（四组独立条件）══
-vec3 iceColor =vec3(0.92,0.95,1.00);
-vec3 floeColor=vec3(0.70,0.78,0.90);
-float fw=clamp(fwidth(lat),1e-4,0.02);
-float iceN =uIceN /160.0;
 float floeN=uIceNFI/160.0;
-float iceS =uIceS /160.0;
 float floeS=uIceSFI/160.0;
 if(floeN>0.0&&!isLand){
 float e=1.0-floeN+fbm(p*4.0+sh.xyz+555.00,5,sh.w)*0.12;
@@ -507,10 +590,10 @@ if(floeS>0.0&&!isLand){
 float e=-1.0+floeS+fbm(p*4.0+sh.xyz+666.00,5,sh.w)*0.12;
 {float dp=clamp((sea-h)/max(sea,1e-3),0.0,1.0);float shl=1.0-smoothstep(0.0,0.5,dp);float cf=smoothstep(-ICE_SOFT,ICE_SOFT,e-lat+shl*FLOE_SHALLOW);float nz=fbm(p*16.0+sh.xyz+330.0,3,sh.w)*0.5+0.5;float fl=smoothstep(0.30,0.70,cf*1.25+(nz-0.5)*SNOW_PATCH);float th=clamp(cf*0.7+shl*0.3,0.0,1.0);vec3 fc=mix(vec3(0.78,0.82,0.88),vec3(0.95,0.96,0.98),th);fc*=1.0+clamp(-dot(gr,vec2(-0.7,0.7))*RELIEF_K*OCEAN_RELIEF,-1.0,1.0)*RELIEF_A;col=mix(col,fc,fl);}
 }
+seaMask = isLand ? 0.0 : 1.0;
 return col;
 }`;
 
-// ---------- 大陆 / 板块 ----------
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const geoU = {
 uPlates: { value: Array.from({length:7},()=>new THREE.Vector4(0,0,1,1)) },
@@ -519,14 +602,13 @@ uCont: { value: Array.from({length:5},()=>new THREE.Vector4(0,0,1,0.2)) },
 uContAx: { value: Array.from({length:5},()=>new THREE.Vector4(1,0,0,1)) }
 };
 const algoU = { value: 1 };
-const plateU = { ...geoU, uOct:{value:5}, uErode:{value:0}, uRiver:{value:0}, uLight:{value:new THREE.Vector3(0.5,0.4,0.7)} };
+const plateU = { ...geoU, uOct:{value:5}, uErode:{value:0}, uRiver:{value:0}, uLight:{value:new THREE.Vector3(1,0.8,1).normalize()} };
 function randDir(r, zmax){ const z=(r()*2-1)*zmax, a=r()*Math.PI*2, rr=Math.sqrt(1-z*z); return new THREE.Vector3(rr*Math.cos(a), z, rr*Math.sin(a)); }
 function genGeo(seed, cl){
 const r = mulberry((Math.floor(seed % 4294967296) ^ Math.floor(seed / 4294967296) * 40503 ^ 0x9e3779b9) >>> 0);
 const ps = []; let tries = 0;
 while (ps.length < 7) { const v = randDir(r,0.9); if (ps.every(c=>c.dot(v)<0.5) || ++tries>80) ps.push(v); }
 ps.forEach((v,i)=>geoU.uPlates.value[i].set(v.x,v.y,v.z,0.8+r()*0.6));
-// 板块运动方向（独立随机源，不影响原有大陆/板块布局）
 const r2 = mulberry(((Math.floor(seed % 4294967296) ^ 0x5bd1e995) >>> 0));
 ps.forEach((v,i)=>{ const t=new THREE.Vector3(r2()-.5,r2()-.5,r2()-.5).cross(v).normalize().multiplyScalar(0.5+r2()*0.5); geoU.uPlateV.value[i].copy(t); });
 const cs = []; tries = 0;
@@ -546,7 +628,6 @@ geoU.uContAx.value[i].set(ax.x,ax.y,ax.z,c.e);
 });
 }
 
-// ---------- 渲染器 ----------
 const previewArea = document.getElementById('preview-area');
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: false });
 const dpr = window.devicePixelRatio || 1;
@@ -567,14 +648,50 @@ const pMat = new THREE.ShaderMaterial({
 extensions: { derivatives: true },
 uniforms: { uAlgo:algoU, uSeed:{value:252477863304}, uSeaLevel:{value:0.48}, uIceN:{value:40}, uIceS:{value:40}, uIceNFI:{value:20}, uIceSFI:{value:20}, uEqDesert:{value:20}, uLandCluster:{value:64}, ...plateU },
 vertexShader: `varying vec3 vPos,vN;void main(){vPos=position;vN=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-fragmentShader: `${noiseShader}${uniDecl}${planetLogic}varying vec3 vPos,vN;
-void main(){vec3 p=normalize(vPos);vec3 c=getPlanetColor(p);vec3 N=normalize(vN);float dif=max(dot(N,normalize(vec3(1.0,0.8,1.0))),0.0);float light=(pow(dif,0.85)*0.85+0.15)*(1.0+gShade);float fr=pow(1.0-max(dot(N,vec3(0.0,0.0,1.0)),0.0),3.0);gl_FragColor=vec4(c*light+vec3(0.25,0.50,1.00)*fr*(0.25+0.75*dif),1.0);}`
+fragmentShader: `${noiseShader}${uniDecl}${planetLogic}
+varying vec3 vPos,vN;
+void main(){
+vec3 p=normalize(vPos);vec3 N=normalize(vN);vec3 L=normalize(uLight);
+Ter T=terrain(p);
+float seaMask;
+vec3 c=getPlanetColor(p,T,seaMask);
+float dif=max(dot(N,L),0.0);
+float light=(pow(dif,0.85)*0.85+0.15)*(1.0+gShade);
+float fr=pow(1.0-max(dot(N,vec3(0.0,0.0,1.0)),0.0),3.0);
+vec3 V=vec3(0.0,0.0,1.0);
+vec3 H=normalize(L+V);
+float spec=pow(max(dot(N,H),0.0),48.0)*0.18*seaMask*dif;
+float night=smoothstep(-0.15,0.05,-dot(N,L));
+vec3 nightCol=vec3(0.0);
+if(night>0.001){
+  float cl=civLights(p,T);
+  vec3 warmCore=vec3(1.0,0.90,0.70);
+  vec3 warmEdge=vec3(1.0,0.65,0.30);
+  vec3 tint=mix(warmEdge,warmCore,smoothstep(0.2,0.8,cl));
+  nightCol=tint*cl*(1.0+2.2*smoothstep(0.0,0.25,cl));
+}
+gl_FragColor=vec4(c*light+vec3(0.25,0.50,1.00)*fr*(0.25+0.75*dif)+vec3(0.90,0.95,1.00)*spec+nightCol*night,1.0);
+}`
 });
-const stormU = { uStorm:{value:Array.from({length:6},()=>new THREE.Vector4(0,1,0,0))}, uStormN:{value:6} };
+
+const hgtRT = new THREE.WebGLRenderTarget(512,256,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,wrapS:THREE.RepeatWrapping});
+const hgtU = { uHgt:{value:hgtRT.texture}, uWind:{value:1} };
+const bakeScene = new THREE.Scene();
+bakeScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), new THREE.ShaderMaterial({
+extensions:{derivatives:true}, uniforms:pMat.uniforms,
+vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,1.0);}`,
+fragmentShader:`${noiseShader}${uniDecl}${planetLogic}varying vec2 vUv;
+vec3 sp(float lo,float la){return vec3(cos(la)*sin(lo),sin(la),cos(la)*cos(lo));}
+void main(){float lon=(vUv.x*2.0-1.0)*3.14159265;float lat=(vUv.y*2.0-1.0)*1.57079632;gl_FragColor=vec4(vec3(getH(sp(lon,lat))),1.0);}`
+})));
+const bakeCam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+function bakeHeight(){ const old=renderer.getRenderTarget(); renderer.setRenderTarget(hgtRT); renderer.render(bakeScene,bakeCam); renderer.setRenderTarget(old); }
+let bakeT=null; function scheduleBake(){ clearTimeout(bakeT); bakeT=setTimeout(bakeHeight,250); }
+
 const cMat = new THREE.ShaderMaterial({
-uniforms: { uAlgo:algoU, uSeed:{value:252477863304}, uCloud:{value:0.5}, uCont:geoU.uCont, uContAx:geoU.uContAx, ...stormU },
+uniforms: { uAlgo:algoU, uSeed:{value:252477863304}, uCloud:{value:0.5}, uCont:geoU.uCont, uContAx:geoU.uContAx, uSeaLevel:pMat.uniforms.uSeaLevel, ...hgtU },
 vertexShader: `varying vec3 vPos;void main(){vPos=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position*1.03,1.0);}`,
-fragmentShader: `${noiseShader}${contDecl}${stormDecl}varying vec3 vPos;uniform float uSeed,uCloud;${cloudLogic}
+fragmentShader: `${noiseShader}${contDecl}varying vec3 vPos;uniform float uSeed,uCloud,uSeaLevel;${cloudLogic}
 void main(){vec2 ca=cloudAlpha(normalize(vPos),5);gl_FragColor=vec4(vec3(ca.y),ca.x);}`,
 transparent: true, depthWrite: false, blending: THREE.NormalBlending
 });
@@ -587,10 +704,10 @@ for (let i=0;i<9000;i+=3){const r=60+Math.random()*180,th=Math.random()*Math.PI*
 starsGeo.setAttribute('position', new THREE.BufferAttribute(sp,3));
 scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({color:0xffffff,size:0.2,transparent:true})));
 
-// ---------- UI ----------
 const ids = { sea:['seaIn','seaVal'], cloud:['cloudIn','cloudVal'], eqDesert:['eqDesertIn','eqDesertVal'], iceN:['iceNIn','iceNVal'], iceS:['iceSIn','iceSVal'], iceNFI:['iceNFlIn','iceNFlVal'], iceSFI:['iceSFlIn','iceSFlVal'], landCluster:['landClusterIn','landClusterVal'] };
 const $ = id => document.getElementById(id);
 let lastSeed = null;
+let timeOfDay = 12;
 function syncFromUI(){
 const seed = parseFloat($('seedIn').value) || 252477863304;
 algoU.value = parseFloat($('algoSel').value);
@@ -605,6 +722,7 @@ pMat.uniforms.uIceSFI.value = parseFloat($('iceSFlIn').value);
 pMat.uniforms.uLandCluster.value = parseFloat($('landClusterIn').value);
 const key = seed+'|'+pMat.uniforms.uLandCluster.value;
 if (key !== lastSeed) { genGeo(seed, pMat.uniforms.uLandCluster.value/100); lastSeed = key; }
+scheduleBake();
 }
 for (const [rid, nid] of Object.values(ids)) {
 const r = $(rid), n = $(nid);
@@ -616,10 +734,18 @@ $('algoSel').addEventListener('change', syncFromUI);
 $('erodeChk').addEventListener('change', applyQuality);
 $('btn-rand').onclick = () => { $('seedIn').value = Math.floor(Math.random()*999999999999)+1; syncFromUI(); };
 
-// ---------- 导出 ----------
+$('timeIn').addEventListener('input', () => {
+  timeOfDay = parseFloat($('timeIn').value);
+  $('timeVal').value = timeOfDay;
+});
+$('timeVal').addEventListener('input', () => {
+  timeOfDay = parseFloat($('timeVal').value);
+  $('timeIn').value = timeOfDay;
+});
+
 async function doExport(mode){
 const p = ['seedIn','seaIn','cloudIn','eqDesertIn','iceNIn','iceSIn','iceNFlIn','iceSFlIn','landClusterIn'].map(i=>$(i).value);
-const W = 4096, H = 2048, ST = 128, SH = H/ST;   // 分128条渲染，每条很小，避免GPU超时被浏览器强制重置
+const W = 4096, H = 2048, ST = 128, SH = H/ST;
 const toast = $('toast'); toast.textContent = '导出中…'; toast.style.display = 'block';
 await new Promise(r=>setTimeout(r,30));
 const rt = new THREE.WebGLRenderTarget(W, H);
@@ -627,10 +753,10 @@ const u = pMat.uniforms;
 const exMat = new THREE.ShaderMaterial({
 defines: { MODE: mode },
 extensions: { derivatives: true },
-uniforms: { uSeed:{value:u.uSeed.value}, uSeaLevel:{value:u.uSeaLevel.value}, uIceN:{value:u.uIceN.value}, uIceS:{value:u.uIceS.value}, uIceNFI:{value:u.uIceNFI.value}, uIceSFI:{value:u.uIceSFI.value}, uEqDesert:{value:u.uEqDesert.value}, uLandCluster:{value:u.uLandCluster.value}, uCloud:{value:cMat.uniforms.uCloud.value}, uAlgo:{value:algoU.value}, uMode:{value:mode}, uN:{value:5}, ...stormU, ...geoU, uOct:{value:6}, uErode:{value:$('erodeChk').checked?3:0}, uRiver:{value:0}, uLight:{value:new THREE.Vector3()} },
+uniforms: { uSeed:{value:u.uSeed.value}, uSeaLevel:{value:u.uSeaLevel.value}, uIceN:{value:u.uIceN.value}, uIceS:{value:u.uIceS.value}, uIceNFI:{value:u.uIceNFI.value}, uIceSFI:{value:u.uIceSFI.value}, uEqDesert:{value:u.uEqDesert.value}, uLandCluster:{value:u.uLandCluster.value}, uCloud:{value:cMat.uniforms.uCloud.value}, uAlgo:{value:algoU.value}, uMode:{value:mode}, uN:{value:5}, ...hgtU, ...geoU, uOct:{value:6}, uErode:{value:$('erodeChk').checked?3:0}, uRiver:{value:0}, uLight:{value:new THREE.Vector3(1,0.8,1).normalize()} },
 vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,1.0);}`,
-fragmentShader: `${noiseShader}${uniDecl}${stormDecl}${planetLogic}
-varying vec2 vUv;uniform float uCloud,uMode;uniform int uN;${cloudLogic}
+fragmentShader: `${noiseShader}${uniDecl}${planetLogic}
+varying vec2 vUv;uniform float uCloud,uMode;uniform int uN;uniform float uWind;uniform sampler2D uHgt;${cloudLogic}
 vec3 hmCol(float h,float sl){
 if(h<sl)return mix(vec3(0,0,0.3),vec3(0,0.5,1),h/sl);
 float lh=(h-sl)/(1.0-sl);
@@ -644,7 +770,7 @@ void main(){
 float lon=(vUv.x*2.0-1.0)*3.14159265;float lat=(vUv.y*2.0-1.0)*1.57079632;
 vec3 p=sp(lon,lat);
 #if MODE==0
-gl_FragColor=vec4(getPlanetColor(p),1.0);
+Ter T0=terrain(p);float sm0;gl_FragColor=vec4(getPlanetColor(p,T0,sm0),1.0);
 #elif MODE==1
 vec2 ca=cloudAlpha(p,6);gl_FragColor=vec4(vec3(ca.y),ca.x);
 #elif MODE==2
@@ -662,8 +788,11 @@ vec3 nrm=normalize(vec3(-(hR-hL)*0.5*25.0,-(hU-hD)*0.5*25.0,1.0));
 gl_FragColor=vec4(nrm*0.5+0.5,1.0);
 #elif MODE==3
 gl_FragColor=vec4(hmCol(getH(p),uSeaLevel),1.0);
-#else
+#elif MODE==4
 gl_FragColor=getH(p)>=uSeaLevel?vec4(0.0,0.0,0.0,1.0):vec4(0.0);
+#else
+Ter T5=terrain(p);float cl=civLights(p,T5);
+gl_FragColor=vec4(vec3(cl), cl);
 #endif
 }`
 });
@@ -686,56 +815,31 @@ const cv = document.createElement('canvas'); cv.width=W; cv.height=H;
 const cx = cv.getContext('2d'); const img = cx.createImageData(W,H); img.data.set(px); cx.putImageData(img,0,0);
 const fl = document.createElement('canvas'); fl.width=W; fl.height=H;
 const fx = fl.getContext('2d'); fx.translate(0,H); fx.scale(1,-1); fx.drawImage(cv,0,0);
-const names = ['地形','云层','法线','高度图','陆地'];
+const names = ['地形','云层','法线','高度图','陆地','文明灯光'];
 const a = document.createElement('a');
 a.download = `${names[mode]}_种子${p[0]}_海${p[1]}_云${p[2]}_漠${p[3]}_北冰${p[4]}_南冰${p[5]}_北浮${p[6]}_南浮${p[7]}_聚${p[8]}.png`;
 a.href = fl.toDataURL(); a.click();
 toast.textContent = '贴图已导出'; setTimeout(()=>toast.style.display='none',2000);
 }
 $('btn-geo').onclick=()=>doExport(0); $('btn-cld').onclick=()=>doExport(1); $('btn-nor').onclick=()=>doExport(2);
-$('btn-hgt').onclick=()=>doExport(3); $('btn-land').onclick=()=>doExport(4);
+$('btn-hgt').onclick=()=>doExport(3); $('btn-land').onclick=()=>doExport(4); $('btn-light').onclick=()=>doExport(5);
 
-// ---------- 导入图片复现 ----------
-// 文件名格式：名字_种子xxx_海xx_云xx_漠xx_北冰xx_南冰xx_北浮xx_南浮xx_聚xx.png
 function parseParamsFromName(name){
-console.log('=== 开始解析文件名 ===');
-console.log('原始 name =', name);
-console.log('字符逐个 =', [...name].map(c=>c+':'+c.charCodeAt(0)).join(' '));
 const patterns = {
-seed: /种子(\d+)/,
-sea: /海(\d+)/,
-cloud: /云(\d+)/,
-eqDesert: /漠(\d+)/,
-iceN: /北冰(\d+)/,
-iceS: /南冰(\d+)/,
-iceNFI: /北浮(\d+)/,
-iceSFI: /南浮(\d+)/,
-landCluster: /聚(\d+)/
+seed: /种子(\d+)/, sea: /海(\d+)/, cloud: /云(\d+)/, eqDesert: /漠(\d+)/,
+iceN: /北冰(\d+)/, iceS: /南冰(\d+)/, iceNFI: /北浮(\d+)/, iceSFI: /南浮(\d+)/, landCluster: /聚(\d+)/
 };
 const out = {};
-for (const k in patterns) {
-const r = name.match(patterns[k]);
-out[k] = r ? r[1] : null;
-console.log(` ${k.padEnd(12)} 匹配=`, r ? r[1] : '❌ 失败');
-}
-console.log('=== 解析结果 ===', out);
+for (const k in patterns) { const r = name.match(patterns[k]); out[k] = r ? r[1] : null; }
 return out;
 }
 $('btn-import').onclick = () => {
 const raw = $('nameImport').value.trim();
 const toast = $('toast');
-if (!raw) {
-toast.textContent = '请先粘贴文件名';
-toast.style.display = 'block';
-setTimeout(() => toast.style.display = 'none', 2000);
-return;
-}
+if (!raw) { toast.textContent = '请先粘贴文件名'; toast.style.display = 'block'; setTimeout(() => toast.style.display = 'none', 2000); return; }
 const params = parseParamsFromName(raw);
 const found = Object.values(params).filter(v => v !== null).length;
-if (found === 0) {
-alert('没解析到参数\n你粘贴的内容：' + raw + '\n抓到数字：' + JSON.stringify(raw.match(/\d+/g) || []));
-return;
-}
+if (found === 0) { alert('没解析到参数'); return; }
 if (params.seed !== null) $('seedIn').value = params.seed;
 if (params.sea !== null) { $('seaIn').value = params.sea; $('seaVal').value = params.sea; }
 if (params.cloud !== null) { $('cloudIn').value = params.cloud; $('cloudVal').value = params.cloud; }
@@ -746,81 +850,37 @@ if (params.iceNFI !== null) { $('iceNFlIn').value = params.iceNFI; $('iceNFlVal'
 if (params.iceSFI !== null) { $('iceSFlIn').value = params.iceSFI; $('iceSFlVal').value = params.iceSFI; }
 if (params.landCluster !== null) { $('landClusterIn').value = params.landCluster; $('landClusterVal').value = params.landCluster; }
 syncFromUI();
-toast.textContent = `已恢复 ${found} 个参数`;
-toast.style.display = 'block';
-setTimeout(() => toast.style.display = 'none', 2000);
+toast.textContent = `已恢复 ${found} 个参数`; toast.style.display = 'block'; setTimeout(() => toast.style.display = 'none', 2000);
 };
 
-// ---------- 台风系统 ----------
-const storms = Array.from({length:6},()=>({c:null,I:0.6}));
-const showToast = t => { const e=$('toast'); e.textContent=t; e.style.display='block'; setTimeout(()=>e.style.display='none',2400); };
-function pushStorms(){
-const cnt = parseInt($('stormCntIn').value);
-storms.forEach((st,i)=>stormU.uStorm.value[i].set(st.c?st.c.x:0, st.c?st.c.y:1, st.c?st.c.z:0, (st.c&&i<cnt)?st.I:0));
-}
-$('stormCntIn').addEventListener('input',()=>{ $('stormCntVal').value=$('stormCntIn').value; pushStorms(); });
-$('stormCntVal').addEventListener('input',()=>{ $('stormCntIn').value=$('stormCntVal').value; pushStorms(); });
-function setInt(v){ storms[parseInt($('stormSel').value)].I=v/100; pushStorms(); }
-$('stormIntIn').addEventListener('input',()=>{ $('stormIntVal').value=$('stormIntIn').value; setInt(parseFloat($('stormIntIn').value)); });
-$('stormIntVal').addEventListener('input',()=>{ $('stormIntIn').value=$('stormIntVal').value; setInt(parseFloat($('stormIntVal').value)); });
-$('stormSel').addEventListener('change',()=>{ const v=Math.round(storms[parseInt($('stormSel').value)].I*100); $('stormIntIn').value=v; $('stormIntVal').value=v; });
-let placing = false, downXY = null;
-$('btn-place').onclick = () => { placing=!placing; $('btn-place').style.background = placing?'#ffb300':''; showToast(placing?'放置模式：点击星球上的海面':'已退出放置模式'); };
-renderer.domElement.addEventListener('pointerdown',e=>{ downXY=[e.clientX,e.clientY]; });
-renderer.domElement.addEventListener('pointerup',e=>{
-if(!placing||!downXY) return;
-if(Math.hypot(e.clientX-downXY[0],e.clientY-downXY[1])>6) return;
-tryPlace(e.clientX,e.clientY);
-});
-function tryPlace(cx,cy){
-const sel = parseInt($('stormSel').value);
-if(sel >= parseInt($('stormCntIn').value)){ showToast('请先把“台风数量”调到至少 '+(sel+1)); return; }
-const rect = renderer.domElement.getBoundingClientRect();
-const rc = new THREE.Raycaster();
-rc.setFromCamera(new THREE.Vector2(((cx-rect.left)/rect.width)*2-1, -((cy-rect.top)/rect.height)*2+1), camera);
-const hit = rc.intersectObject(planetMesh)[0];
-if(!hit){ showToast('请点在星球上'); return; }
-const c = hit.point.clone().normalize();
-if(c.dot(camera.position.clone().normalize()) < 0.35){ showToast('请点在星球正面'); return; }
-const al = Math.abs(c.y);
-if(al<0.09 || al>0.62){ showToast('此处纬度不可能形成台风（需约5°–38°的热带/副热带）'); return; }
-cloudMesh.visible=false; renderer.render(scene,camera);
-const gl = renderer.getContext(), px = new Uint8Array(4), cv = renderer.domElement;
-gl.readPixels(Math.floor((cx-rect.left)*cv.width/rect.width), Math.floor(cv.height-(cy-rect.top)*cv.height/rect.height), 1,1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-cloudMesh.visible=true;
-if(!(px[2]>px[0]*1.3 && px[2]>px[1]*1.02)){ showToast('此处是陆地或冰面，湿度/海温不足，无法形成台风'); return; }
-storms[sel].c = c; storms[sel].I = parseFloat($('stormIntIn').value)/100; pushStorms();
-showToast('已放置台风 '+(sel+1));
-}
-function contSCPU(v){ let s=-9; for(let i=0;i<5;i++){ const c=geoU.uCont.value[i], a=geoU.uContAx.value[i];
-const dt=v.x*c.x+v.y*c.y+v.z*c.z, t=v.x*a.x+v.y*a.y+v.z*a.z, t2=t*t/Math.max(1-dt*dt,1e-4);
-s=Math.max(s, c.w-(1-dt)*(1+a.w*(1-t2))); } return s; }
-$('btn-autostorm').onclick = () => {
-const cnt = parseInt($('stormCntIn').value);
-if(cnt===0){ showToast('请先增加台风数量'); return; }
-const r = mulberry(((parseInt($('seedIn').value)||1) ^ 0x7a3f) >>> 0), placed=[];
-for(let i=0;i<6;i++) storms[i].c=null;
-for(let i=0;i<cnt;i++){ for(let k=0;k<500;k++){
-const y=(0.09+0.53*r())*(r()<0.5?-1:1), lon=r()*Math.PI*2, rad=Math.sqrt(1-y*y);
-const v=new THREE.Vector3(rad*Math.cos(lon), y, rad*Math.sin(lon));
-if(contSCPU(v) < -0.25 && placed.every(p=>p.dot(v)<0.8)){ storms[i].c=v; storms[i].I=0.3+0.6*r(); placed.push(v); break; }
-} }
-pushStorms(); const sel=parseInt($('stormSel').value), vv=Math.round(storms[sel].I*100); $('stormIntIn').value=vv; $('stormIntVal').value=vv;
-showToast('已在温暖海面自动布置 '+placed.length+' 个台风');
-};
-// ---------- 循环 + 自适应画质 ----------
 function applyQuality(){
 renderer.setPixelRatio(Q_PIX[quality]);
-plateU.uOct.value = Q_OCT[quality]; plateU.uErode.value = $('erodeChk').checked ? 1 : 0; plateU.uRiver.value = Q_RIV[quality];
+scheduleBake(); plateU.uOct.value = Q_OCT[quality]; plateU.uErode.value = $('erodeChk').checked ? 1 : 0; plateU.uRiver.value = Q_RIV[quality];
 updateRendererSize();
 }
+const _worldLightBase = new THREE.Vector3(1,0.8,1).normalize();
+const _worldLight = new THREE.Vector3();
+const _viewLight = new THREE.Vector3(1,0.8,1).normalize();
+const _qInv = new THREE.Quaternion();
 let last = performance.now(), ema = 16, frames = 0;
 function animate(){
 requestAnimationFrame(animate);
 const now = performance.now(), dt = Math.min(now-last, 200); last = now;
 ema = ema*0.95 + dt*0.05;
 if (++frames % 90 === 0 && ema > 40 && quality > 0 && !$('erodeChk').checked) { quality--; applyQuality(); ema = 16; }
-plateU.uLight.value.set(1,0.8,1).normalize().applyQuaternion(camera.quaternion);
+if ($('lightLockChk').checked) {
+  plateU.uLight.value.copy(_viewLight);
+} else {
+  const angle = (timeOfDay / 24) * Math.PI * 2;
+  const c = Math.cos(angle), s = Math.sin(angle);
+  _worldLight.set(
+    _worldLightBase.x * c - _worldLightBase.z * s,
+    _worldLightBase.y,
+    _worldLightBase.x * s + _worldLightBase.z * c
+  ).normalize();
+  _qInv.copy(camera.quaternion).invert();
+  plateU.uLight.value.copy(_worldLight).applyQuaternion(_qInv);
+}
 controls.update();
 renderer.render(scene, camera);
 }
